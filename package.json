@@ -14,6 +14,7 @@
     "build": "tsup",
     "typecheck": "tsc --noEmit",
     "brewfile": "tsx scripts/generate-brewfile.ts",
+    "prepare": "npm run build",
     "prepack": "npm run build && npm run typecheck",
     "version": "npm run build && git add -A dist",
     "test": "tsx --test src/**/*.test.ts"
