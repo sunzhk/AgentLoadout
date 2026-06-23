@@ -6,19 +6,21 @@ CLI that installs and verifies a curated set of terminal tools for agentic codin
 
 ```
 src/
-  index.ts        CLI entry point (commander). Wires commands: install, verify, list.
-  catalog.ts      Tool + preset definitions. Single source of truth for all 50 tools.
+  index.ts        CLI entry point (commander). Wires commands: install, verify, list, skills.
+  catalog.ts      Tool + preset definitions. Single source of truth for all 60+ tools.
   brew.ts         Generates Brewfile, runs `brew bundle`.
   npm.ts          Handles `npm install -g` for npm-only tools (knip, svgo).
   verify.ts       Runs each tool's verify command, reports installed/missing.
   skills.ts       Imports skill modules, writes per-tool .md files + SKILL.md TOC.
+  symlink.ts      Creates/removes symlinks from ~/.agents/skills/ to each Agent's skill dir.
   skills/         One .ts file per tool, each exports a markdown skill string.
   receipt.ts      Reads/writes ~/.agent-loadout/receipt.json (what was installed).
-  paths.ts        Central path constants (~/.agent-loadout/, ~/.claude/skills/agent-loadout/).
+  paths.ts        Central path constants (~/.agent-loadout/, ~/.agents/skills/agent-loadout/).
   ui.ts           Interactive prompts (inquirer) and preview formatting.
+  config.ts       Reads ~/.agent-loadout/config.json for persisted preferences.
 ```
 
-**Data flow:** `catalog.ts` defines tools → user selects via `ui.ts` → `brew.ts`/`npm.ts` install → `verify.ts` checks → `skills.ts` + `receipt.ts` persist results.
+**Data flow:** `catalog.ts` defines tools → user selects via `ui.ts` → `brew.ts`/`npm.ts` install → `verify.ts` checks → `skills.ts` writes skills to `~/.agents/skills/agent-loadout/` → `symlink.ts` creates symlinks for selected Agents → `receipt.ts` persists results.
 
 ## Conventions
 
@@ -64,5 +66,5 @@ pnpm build                  # tsup → dist/
 
 - Don't add tools without a verify command
 - Don't use `execa` with `shell: true` or string commands
-- Don't write to paths outside `~/.agent-loadout/` and `~/.claude/skills/agent-loadout/`
+- Don't write to paths outside `~/.agent-loadout/` and `~/.agents/skills/agent-loadout/`
 - Don't import from `dist/` — always import from `./module.js`

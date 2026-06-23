@@ -12,7 +12,7 @@ const TMP = join(tmpdir(), `agent-loadout-test-${process.pid}`);
 const SKILLS_DIR = join(TMP, "skills");
 
 function skillFile(id: string): string {
-  return join(SKILLS_DIR, `agent-loadout-${id}.md`);
+  return join(SKILLS_DIR, `${id}.md`);
 }
 
 function makeTool(id: string): Tool {
@@ -82,19 +82,19 @@ describe("writeSkills (integration — uses real catalog content)", () => {
     // Use real catalog tools that have skill content registered
     const { TOOLS } = await import("./catalog.js");
     const { writeSkills: write } = await import("./skills.js");
-    const { paths, ensureSkillDirs } = await import("./paths.js");
+    const { paths, ensureSkillDir } = await import("./paths.js");
 
     // Grab 3 real tools
     const tools = TOOLS.slice(0, 3);
-    // writeSkills targets real paths — just assert count is correct
-    await ensureSkillDirs();
+    // writeSkills targets canonical path — just assert count is correct
+    await ensureSkillDir();
     const count = await write(tools);
     assert.equal(count, 3);
 
-    // Verify files were written to the real claude skills dir
+    // Verify files were written to the canonical skills dir
     for (const tool of tools) {
       await assert.doesNotReject(
-        access(join(paths.skillTargets.claude, `agent-loadout-${tool.id}.md`)),
+        access(join(paths.canonicalSkillDir, `${tool.id}.md`)),
         `Expected skill file for ${tool.id}`,
       );
     }
@@ -106,8 +106,8 @@ describe("writeSkills (integration — uses real catalog content)", () => {
     const realTool = TOOLS[0];
 
     const { writeSkills: write } = await import("./skills.js");
-    const { ensureSkillDirs } = await import("./paths.js");
-    await ensureSkillDirs();
+    const { ensureSkillDir } = await import("./paths.js");
+    await ensureSkillDir();
 
     const count = await write([ghostTool, realTool]);
     // Only the real tool has content, ghost is skipped

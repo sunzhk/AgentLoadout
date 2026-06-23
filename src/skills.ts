@@ -1,6 +1,6 @@
 import { access, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { paths, ensureSkillDirs } from "./paths.js";
+import { paths, ensureSkillDir } from "./paths.js";
 import { PRESETS } from "./catalog.js";
 import type { Tool } from "./catalog.js";
 
@@ -163,7 +163,7 @@ function buildFrontmatter(tool: Tool): string {
 
 export async function findToolsMissingSkills(
   toolIds: string[],
-  dir = paths.skillTargets.claude,
+  dir = paths.canonicalSkillDir,
 ): Promise<string[]> {
   const results = await Promise.all(
     toolIds.map(async (id) => {
@@ -216,6 +216,7 @@ function buildTOC(tools: Tool[]): string {
 
   return [
     "---",
+    `name: agent-loadout`,
     `description: "${compactDescription}"`,
     "source: agent-loadout",
     "---",
@@ -230,8 +231,8 @@ function buildTOC(tools: Tool[]): string {
 }
 
 export async function writeSkills(tools: Tool[]): Promise<number> {
-  await ensureSkillDirs();
-  const allDirs = [...Object.values(paths.skillTargets), paths.genericSkills];
+  await ensureSkillDir();
+  const dir = paths.canonicalSkillDir;
   let written = 0;
 
   for (const tool of tools) {
@@ -239,17 +240,13 @@ export async function writeSkills(tools: Tool[]): Promise<number> {
     if (!content) continue;
     const filename = skillFilename(tool.id);
     const frontmatter = buildFrontmatter(tool);
-    for (const dir of allDirs) {
-      await writeFile(join(dir, filename), frontmatter + content + "\n");
-    }
+    await writeFile(join(dir, filename), frontmatter + content + "\n");
     written++;
   }
 
   // Write TOC last so it reflects exactly what was written
   const toc = buildTOC(tools.filter((t) => SKILL_CONTENT[t.id]));
-  for (const dir of allDirs) {
-    await writeFile(join(dir, "SKILL.md"), toc);
-  }
+  await writeFile(join(dir, "SKILL.md"), toc);
 
   return written;
 }

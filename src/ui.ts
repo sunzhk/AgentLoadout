@@ -5,6 +5,7 @@ import type { PresetId, Tool } from "./catalog.js";
 import type { PlatformInfo } from "./platform.js";
 import type { InstallPlan } from "./resolve.js";
 import { verifyTools } from "./verify.js";
+import { AGENT_LABELS, AGENT_TIER } from "./paths.js";
 
 export async function selectPresets(): Promise<PresetId[]> {
   return checkbox({
@@ -95,4 +96,31 @@ function getInstallPreview(method: string, packages: string[]): string {
 
 export async function confirmInstall(): Promise<boolean> {
   return confirm({ message: "Install now?", default: true });
+}
+
+const TIER_BADGE: Record<number, string> = {
+  1: "✅",
+  2: "⬜",
+  3: "🔮",
+};
+
+/** 让用户选择要将 skill symlink 到哪些 Agent */
+export async function selectAgents(
+  defaults: string[] = ["claude", "pi", "codex", "augment", "qwen"],
+): Promise<string[]> {
+  const choices = Object.entries(AGENT_LABELS).map(([id, label]) => {
+    const tier = AGENT_TIER[id] ?? 3;
+    const badge = TIER_BADGE[tier];
+    const tierLabel = tier === 1 ? "已确认" : tier === 2 ? "待验证" : "预埋";
+    return {
+      name: `${badge} ${label} [${tierLabel}]`,
+      value: id,
+      checked: defaults.includes(id),
+    };
+  });
+
+  return checkbox({
+    message: "Select AI agents to enable skill discovery for:",
+    choices,
+  });
 }

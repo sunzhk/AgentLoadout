@@ -105,39 +105,40 @@ Pick presets, toggle individual tools, and get a verified installation with skil
 
 ```sh
 # Interactive install (default)
-npx agent-loadout
+npx github:sunzk/AgentLoadout
 
 # Install specific presets (dry run)
-npx agent-loadout install --preset core agent
+npx github:sunzk/AgentLoadout install --preset core agent
 
-# Install specific presets (actually run it)
-npx agent-loadout install --preset core agent --apply
+# Install specific presets + specify agents for skill symlinks
+npx github:sunzk/AgentLoadout install --preset core agent --apply --agents claude pi
 
 # Install everything
-npx agent-loadout install --all --apply
+npx github:sunzk/AgentLoadout install --all --apply
 
 # Install specific tools by ID
-npx agent-loadout install --tool pandoc duckdb --apply
+npx github:sunzk/AgentLoadout install --tool pandoc duckdb --apply
 
 # Install everything except specific tools
-npx agent-loadout install --all --skip lazygit bottom --apply
+npx github:sunzk/AgentLoadout install --all --skip lazygit bottom --apply
 
 # Check what's installed
-npx agent-loadout verify
-npx agent-loadout verify --json
+npx github:sunzk/AgentLoadout verify
+npx github:sunzk/AgentLoadout verify --json
 
 # List the full catalog
-npx agent-loadout list
-npx agent-loadout list --json
+npx github:sunzk/AgentLoadout list
+npx github:sunzk/AgentLoadout list --json
 
 # Print a generated Brewfile (macOS only)
-npx agent-loadout list --brewfile
+npx github:sunzk/AgentLoadout list --brewfile
 
-# Write missing skill files for installed tools
-npx agent-loadout skills
-
-# Rewrite all skill files (e.g. after upgrading agent-loadout)
-npx agent-loadout skills --force
+# Manage skills and agent symlinks
+npx github:sunzk/AgentLoadout skills              # fill missing skill files
+npx github:sunzk/AgentLoadout skills --force       # rewrite all skill files
+npx github:sunzk/AgentLoadout skills --link        # interactively create agent symlinks
+npx github:sunzk/AgentLoadout skills --link --agents pi gemini
+npx github:sunzk/AgentLoadout skills --unlink qwen # remove an agent symlink
 ```
 
 ## Brewfile alternative (macOS)
@@ -150,23 +151,47 @@ brew bundle
 
 ## Skills
 
-When you install tools, `agent-loadout` writes skill files to:
+Skill files are written to a single canonical directory:
 
-- `~/.claude/skills/agent-loadout/` — auto-discovered by Claude Code
-- `~/.agent-loadout/skills/` — generic copy for other agents
+```
+~/.agents/skills/agent-loadout/
+├── SKILL.md      ← index discovered by agents
+├── rg.md         ← per-tool reference pages
+├── fd.md
+├── jq.md
+└── ... (60+ tools)
+```
 
-Each skill is a focused playbook: what the tool does, trusted commands, output formats, and gotchas. A `SKILL.md` index is also written, with every installed tool and its primary use case packed into the frontmatter — so your agent sees the full inventory in its system prompt on every session without loading individual files.
+Then symlinks are created so each AI agent discovers the same skill set:
 
-### Syncing skills
+```
+~/.claude/skills/agent-loadout  → ~/.agents/skills/agent-loadout
+~/.pi/agent/skills/agent-loadout → ~/.agents/skills/agent-loadout
+~/.codex/skills/agent-loadout   → ~/.agents/skills/agent-loadout
+...
+```
 
-Skills are written automatically after `install`. To write or refresh them independently:
+Each skill is a focused playbook: what the tool does, trusted commands, output formats, and gotchas. The `SKILL.md` index packs every installed tool and its primary use case into the frontmatter — so your agent sees the full inventory in its system prompt without loading individual files.
+
+### Managing skills
+
+Skills are written automatically after `install`. Manage them independently:
 
 ```sh
-# Write skills for any installed tools that don't have one yet
-npx agent-loadout skills
+# Fill missing skill files for installed tools
+npx github:sunzk/AgentLoadout skills
 
-# Rewrite skill files for all installed tools
-npx agent-loadout skills --force
+# Rewrite all skill files
+npx github:sunzk/AgentLoadout skills --force
+
+# Create agent symlinks (interactive)
+npx github:sunzk/AgentLoadout skills --link
+
+# Link specific agents
+npx github:sunzk/AgentLoadout skills --link --agents pi gemini
+
+# Remove an agent symlink
+npx github:sunzk/AgentLoadout skills --unlink cline
 ```
 
 ## Requirements
@@ -181,22 +206,20 @@ A small number of tools are macOS/Windows-only and will be shown as skipped on p
 ## Contributing
 
 1. Fork and clone
-2. `pnpm install`
-3. `pnpm dev -- list` to run locally
+2. `npm install`
+3. `npx tsx src/index.ts list` to run locally
 4. Add tools in `src/catalog.ts` (per-platform install maps), add a skill file in `src/skills/`
-5. `pnpm typecheck` before submitting
+5. `npx tsc --noEmit` before submitting
 
 ### Releasing
 
-```sh
-# Create a GitHub release — CI publishes to npm automatically
-gh release create v0.2.0 --generate-notes
+Push to `main` — users install directly from GitHub:
 
-# The release workflow:
-# extracts version from tag → syncs package.json → typecheck → build → npm publish
+```sh
+npx github:sunzk/AgentLoadout
 ```
 
-Requires `NPM_TOKEN` secret set in the repository settings.
+No npm publish needed. The `prepack` script ensures `dist/` is built on install.
 
 ## License
 

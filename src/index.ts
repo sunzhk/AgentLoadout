@@ -1,4 +1,5 @@
 import { Command } from "commander";
+import { homedir } from "node:os";
 import chalk from "chalk";
 import { PRESETS, TOOLS, getToolsByIds, validateToolIds } from "./catalog.js";
 import type { PresetId } from "./catalog.js";
@@ -12,9 +13,12 @@ import {
   selectTools,
   printPreview,
   confirmInstall,
+  selectAgents,
 } from "./ui.js";
 import { writeSkills, findToolsMissingSkills } from "./skills.js";
-import { paths } from "./paths.js";
+import { createSymlinks, removeSymlink } from "./symlink.js";
+import type { AgentId } from "./symlink.js";
+import { paths, AGENT_TIER, AGENT_SKILL_LINKS } from "./paths.js";
 
 const program = new Command();
 
@@ -39,6 +43,7 @@ program
   .option("--skip <tools...>", "Exclude specific tools by ID")
   .option("--all", "Install everything")
   .option("--apply", "Actually run the install (default is preview only)")
+  .option("--agents <agents...>", "Agents to create symlinks for")
   .action(async (opts) => {
     const platformInfo = await detectPlatform();
 
@@ -139,13 +144,35 @@ program
     const results = await verifyTools(resolvedTools, platformInfo.platform);
     printVerifyResults(results);
 
-    // Write skills
+    // Write skills to canonical directory
     const skillCount = await writeSkills(resolvedTools);
     if (skillCount > 0) {
-      const targets = Object.keys(paths.skillTargets).join(", ");
       console.log(
-        chalk.dim(`\n  ${skillCount} skill files written to ${targets} + ~/.agent-loadout/skills/`),
+        chalk.dim(`\n  ${skillCount} skill files written to ~/.agents/skills/agent-loadout/`),
       );
+    }
+
+    // Create symlinks (Tier 1 默认全选)
+    const defaultAgents = Object.entries(AGENT_TIER)
+      .filter(([, tier]) => tier === 1)
+      .map(([id]) => id);
+    const selectedAgents = (opts.agents as string[] | undefined) ??
+      (opts.all || opts.preset || opts.tool
+        ? defaultAgents
+        : await selectAgents(defaultAgents));
+
+    if (selectedAgents.length > 0) {
+      const linkResults = await createSymlinks(selectedAgents as AgentId[]);
+      for (const [agent, result] of Object.entries(linkResults)) {
+        const shortPath = AGENT_SKILL_LINKS[agent].replace(homedir(), "~");
+        if (result === "created") {
+          console.log(chalk.dim(`  🔗 ${shortPath}`));
+        } else if (result === "blocked") {
+          console.log(
+            chalk.yellow(`  ⚠  ${shortPath} blocked — real directory exists. Remove it first: rm -rf ${AGENT_SKILL_LINKS[agent]}`),
+          );
+        }
+      }
     }
 
     // Write receipt
@@ -241,47 +268,97 @@ program
 
 program
   .command("skills")
-  .description("Write skill files for installed tools (fills gaps by default)")
+  .description("Manage skill files and agent symlinks")
   .option("--force", "Rewrite skill files for all installed tools")
+  .option("--agents <agents...>", "Agents to link: claude, pi, codex, augment, qwen, gemini, cline, roocode, amazonq, opencode, windsurf, aider")
+  .option("--link", "Create symlinks for selected agents")
+  .option("--unlink <agents...>", "Remove symlinks for specified agents")
   .action(async (opts) => {
     const platformInfo = await detectPlatform();
     const results = await verifyTools(TOOLS, platformInfo.platform);
     const installedIds = new Set(results.filter((r) => r.installed).map((r) => r.id));
     const installedTools = TOOLS.filter((t) => installedIds.has(t.id));
 
-    if (installedTools.length === 0) {
-      console.log(chalk.dim("  No installed tools found."));
-      return;
-    }
+    let didSomething = false;
 
+    // ── Write skill files ──
     if (opts.force) {
       console.log(chalk.dim(`  Writing skills for ${installedTools.length} installed tools...`));
       const written = await writeSkills(installedTools);
-      const targets = Object.keys(paths.skillTargets).join(", ");
       console.log(
-        chalk.green(`  ${written} skill files written to ${targets} + ~/.agent-loadout/skills/`),
+        chalk.green(`  ${written} skill files written to ~/.agents/skills/agent-loadout/`),
       );
-      return;
+      didSomething = true;
+    } else if (!opts.link && !opts.unlink) {
+      // Default behavior: fill gaps
+      if (installedTools.length === 0) {
+        console.log(chalk.dim("  No installed tools found."));
+        return;
+      }
+      console.log(chalk.dim(`  Scanning ${installedTools.length} installed tools...`));
+      const missingIds = await findToolsMissingSkills(installedTools.map((t) => t.id));
+
+      if (missingIds.length === 0) {
+        console.log(chalk.green(`  ✓ All ${installedTools.length} installed tools already have skill files.`));
+      } else {
+        const alreadyHave = installedTools.length - missingIds.length;
+        console.log(chalk.dim(`  ${alreadyHave} already have skill files`));
+        console.log(chalk.dim(`  Writing ${missingIds.length} missing: ${missingIds.join(", ")}`));
+
+        const toolsToWrite = installedTools.filter((t) => missingIds.includes(t.id));
+        const written = await writeSkills(toolsToWrite);
+        console.log(
+          chalk.green(`  ${written} skill files written to ~/.agents/skills/agent-loadout/`),
+        );
+      }
+      didSomething = true;
     }
 
-    console.log(chalk.dim(`  Scanning ${installedTools.length} installed tools...`));
-    const missingIds = await findToolsMissingSkills(installedTools.map((t) => t.id));
+    // ── Link symlinks ──
+    if (opts.link || opts.agents) {
+      const defaultAgents = Object.entries(AGENT_TIER)
+        .filter(([, tier]) => tier === 1)
+        .map(([id]) => id);
+      const agents = (opts.agents as string[] | undefined) ??
+        await selectAgents(defaultAgents);
 
-    if (missingIds.length === 0) {
-      console.log(chalk.green(`  ✓ All ${installedTools.length} installed tools already have skill files.`));
-      return;
+      if (agents.length > 0) {
+        const linkResults = await createSymlinks(agents as AgentId[]);
+        for (const [agent, result] of Object.entries(linkResults)) {
+          const shortPath = AGENT_SKILL_LINKS[agent].replace(homedir(), "~");
+          if (result === "created") {
+            console.log(chalk.green(`  🔗 ${shortPath}`));
+          } else if (result === "already-exists") {
+            console.log(chalk.dim(`  ✓  ${shortPath} (already linked)`));
+          } else if (result === "blocked") {
+            console.log(
+              chalk.yellow(`  ⚠  ${shortPath} blocked — remove existing directory first`),
+            );
+          }
+        }
+      }
+      didSomething = true;
     }
 
-    const alreadyHave = installedTools.length - missingIds.length;
-    console.log(chalk.dim(`  ${alreadyHave} already have skill files`));
-    console.log(chalk.dim(`  Writing ${missingIds.length} missing: ${missingIds.join(", ")}`));
+    // ── Unlink ──
+    if (opts.unlink) {
+      for (const agent of opts.unlink as string[]) {
+        const result = await removeSymlink(agent as AgentId);
+        const shortPath = AGENT_SKILL_LINKS[agent]?.replace(homedir(), "~") ?? agent;
+        if (result === "removed") {
+          console.log(chalk.dim(`  ✗  unlinked ${shortPath}`));
+        } else if (result === "not-found") {
+          console.log(chalk.dim(`  -  ${shortPath} not found`));
+        } else {
+          console.log(chalk.yellow(`  ⚠  ${shortPath} is not a symlink — skipped`));
+        }
+      }
+      didSomething = true;
+    }
 
-    const toolsToWrite = installedTools.filter((t) => missingIds.includes(t.id));
-    const written = await writeSkills(toolsToWrite);
-    const targets = Object.keys(paths.skillTargets).join(", ");
-    console.log(
-      chalk.green(`  ${written} skill files written to ${targets} + ~/.agent-loadout/skills/`),
-    );
+    if (!didSomething) {
+      console.log(chalk.dim("  Nothing to do. Use --force, --link, or --unlink."));
+    }
   });
 
 program.parse();
