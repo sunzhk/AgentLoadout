@@ -105,40 +105,40 @@ Pick presets, toggle individual tools, and get a verified installation with skil
 
 ```sh
 # Interactive install (default)
-npx github:sunzk/AgentLoadout
+npx github:sunzhk/AgentLoadout
 
 # Install specific presets (dry run)
-npx github:sunzk/AgentLoadout install --preset core agent
+npx github:sunzhk/AgentLoadout install --preset core agent
 
 # Install specific presets + specify agents for skill symlinks
-npx github:sunzk/AgentLoadout install --preset core agent --apply --agents claude pi
+npx github:sunzhk/AgentLoadout install --preset core agent --apply --agents claude pi
 
 # Install everything
-npx github:sunzk/AgentLoadout install --all --apply
+npx github:sunzhk/AgentLoadout install --all --apply
 
 # Install specific tools by ID
-npx github:sunzk/AgentLoadout install --tool pandoc duckdb --apply
+npx github:sunzhk/AgentLoadout install --tool pandoc duckdb --apply
 
 # Install everything except specific tools
-npx github:sunzk/AgentLoadout install --all --skip lazygit bottom --apply
+npx github:sunzhk/AgentLoadout install --all --skip lazygit bottom --apply
 
 # Check what's installed
-npx github:sunzk/AgentLoadout verify
-npx github:sunzk/AgentLoadout verify --json
+npx github:sunzhk/AgentLoadout verify
+npx github:sunzhk/AgentLoadout verify --json
 
 # List the full catalog
-npx github:sunzk/AgentLoadout list
-npx github:sunzk/AgentLoadout list --json
+npx github:sunzhk/AgentLoadout list
+npx github:sunzhk/AgentLoadout list --json
 
 # Print a generated Brewfile (macOS only)
-npx github:sunzk/AgentLoadout list --brewfile
+npx github:sunzhk/AgentLoadout list --brewfile
 
 # Manage skills and agent symlinks
-npx github:sunzk/AgentLoadout skills              # fill missing skill files
-npx github:sunzk/AgentLoadout skills --force       # rewrite all skill files
-npx github:sunzk/AgentLoadout skills --link        # interactively create agent symlinks
-npx github:sunzk/AgentLoadout skills --link --agents pi gemini
-npx github:sunzk/AgentLoadout skills --unlink qwen # remove an agent symlink
+npx github:sunzhk/AgentLoadout skills              # fill missing skill files
+npx github:sunzhk/AgentLoadout skills --force       # rewrite all skill files
+npx github:sunzhk/AgentLoadout skills --link        # interactively create agent symlinks
+npx github:sunzhk/AgentLoadout skills --link --agents pi gemini
+npx github:sunzhk/AgentLoadout skills --unlink qwen # remove an agent symlink
 ```
 
 ## Brewfile alternative (macOS)
@@ -179,19 +179,19 @@ Skills are written automatically after `install`. Manage them independently:
 
 ```sh
 # Fill missing skill files for installed tools
-npx github:sunzk/AgentLoadout skills
+npx github:sunzhk/AgentLoadout skills
 
 # Rewrite all skill files
-npx github:sunzk/AgentLoadout skills --force
+npx github:sunzhk/AgentLoadout skills --force
 
 # Create agent symlinks (interactive)
-npx github:sunzk/AgentLoadout skills --link
+npx github:sunzhk/AgentLoadout skills --link
 
 # Link specific agents
-npx github:sunzk/AgentLoadout skills --link --agents pi gemini
+npx github:sunzhk/AgentLoadout skills --link --agents pi gemini
 
 # Remove an agent symlink
-npx github:sunzk/AgentLoadout skills --unlink cline
+npx github:sunzhk/AgentLoadout skills --unlink cline
 ```
 
 ## Requirements
@@ -216,7 +216,7 @@ A small number of tools are macOS/Windows-only and will be shown as skipped on p
 Push to `main` — users install directly from GitHub:
 
 ```sh
-npx github:sunzk/AgentLoadout
+npx github:sunzhk/AgentLoadout
 ```
 
 No npm publish needed. The `prepack` script ensures `dist/` is built on install.
