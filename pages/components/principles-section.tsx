@@ -37,7 +37,7 @@ export function PrinciplesSection() {
         { text: "VERIFY", highlight: true },
         { text: " EVERYTHING", highlight: false },
       ],
-      description: "Every tool is checked after installation. No silent failures. Run npx agent-loadout verify at any time to confirm what's working.",
+      description: "Every tool is checked after installation. No silent failures. Run npx github:sunzhk/AgentLoadout verify at any time to confirm what's working.",
       align: "left",
     },
     {

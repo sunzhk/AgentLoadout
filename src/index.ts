@@ -115,7 +115,7 @@ program
       if (opts.skip) parts.push(`--skip ${(opts.skip as string[]).join(" ")}`);
       console.log(chalk.yellow("Dry run — add --apply to install. Example:"));
       console.log(
-        chalk.dim(`  npx agent-loadout install ${parts.join(" ")} --apply`),
+        chalk.dim(`  npx github:sunzhk/AgentLoadout install ${parts.join(" ")} --apply`),
       );
       return;
     }

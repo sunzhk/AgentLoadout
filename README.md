@@ -1,9 +1,9 @@
 # agent-loadout
 
-> One command to load out your terminal for agentic coding.
+> Install curated CLI tools for AI coding agents, with auto-generated skill files discoverable by Claude Code, pi, Codex, Gemini CLI, and more.
 
 ```sh
-npx agent-loadout
+npx github:sunzhk/AgentLoadout
 ```
 
 <img width="1536" height="1024" alt="One command to load out your terminal for agentic coding." src="https://github.com/user-attachments/assets/7490564f-0e24-479e-b8d8-1fb0bb468267" />

@@ -7,14 +7,14 @@ import { ScrollTrigger } from "gsap/ScrollTrigger"
 gsap.registerPlugin(ScrollTrigger)
 
 const commands = [
-  { cmd: "npx agent-loadout", desc: "Interactive install (default)" },
-  { cmd: "npx agent-loadout install --preset core agent --apply", desc: "Install specific presets" },
-  { cmd: "npx agent-loadout install --all --apply", desc: "Install everything" },
-  { cmd: "npx agent-loadout verify", desc: "Check what's installed" },
-  { cmd: "npx agent-loadout list", desc: "Full catalog" },
-  { cmd: "npx agent-loadout skills", desc: "Write skill files" },
-  { cmd: "npx agent-loadout skills --force", desc: "Rewrite all skill files" },
-  { cmd: "npx agent-loadout list --brewfile", desc: "Generate Brewfile (macOS)" },
+  { cmd: "npx github:sunzhk/AgentLoadout", desc: "Interactive install (default)" },
+  { cmd: "npx github:sunzhk/AgentLoadout install --preset core agent --apply", desc: "Install specific presets" },
+  { cmd: "npx github:sunzhk/AgentLoadout install --all --apply", desc: "Install everything" },
+  { cmd: "npx github:sunzhk/AgentLoadout verify", desc: "Check what's installed" },
+  { cmd: "npx github:sunzhk/AgentLoadout list", desc: "Full catalog" },
+  { cmd: "npx github:sunzhk/AgentLoadout skills", desc: "Write skill files" },
+  { cmd: "npx github:sunzhk/AgentLoadout skills --link", desc: "Create agent symlinks" },
+  { cmd: "npx github:sunzhk/AgentLoadout list --brewfile", desc: "Generate Brewfile (macOS)" },
 ]
 
 export function ColophonSection() {
@@ -127,9 +127,12 @@ export function ColophonSection() {
         <div className="col-span-2">
           <h4 className="font-mono text-[9px] uppercase tracking-[0.3em] text-muted-foreground mb-4">Skill Files</h4>
           <ul className="space-y-2">
-            <li className="font-mono text-xs text-foreground/80">~/.claude/skills/agent-loadout/</li>
-            <li className="font-mono text-xs text-foreground/80">~/.agent-loadout/skills/</li>
-            <li className="font-mono text-xs text-muted-foreground/60 mt-3">Auto-discovered by Claude Code and other agents</li>
+            <li className="font-mono text-xs text-foreground/80">~/.agents/skills/agent-loadout/</li>
+            <li className="font-mono text-xs text-muted-foreground/60 mt-1">→ ~/.claude/skills/agent-loadout</li>
+            <li className="font-mono text-xs text-muted-foreground/60">→ ~/.pi/agent/skills/agent-loadout</li>
+            <li className="font-mono text-xs text-muted-foreground/60">→ ~/.codex/skills/agent-loadout</li>
+            <li className="font-mono text-xs text-muted-foreground/60">→ ~/.gemini/skills/agent-loadout</li>
+            <li className="font-mono text-xs text-muted-foreground/60 mt-3">One canonical source, symlinked to 10+ agents</li>
           </ul>
         </div>
 
@@ -139,22 +142,12 @@ export function ColophonSection() {
           <ul className="space-y-2">
             <li>
               <a
-                href="https://github.com/conorluddy/AgentLoadout"
+                href="https://github.com/sunzhk/AgentLoadout"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="font-mono text-xs text-foreground/80 hover:text-accent transition-colors duration-200"
               >
                 GitHub
-              </a>
-            </li>
-            <li>
-              <a
-                href="https://www.npmjs.com/package/agent-loadout"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-mono text-xs text-foreground/80 hover:text-accent transition-colors duration-200"
-              >
-                npm
               </a>
             </li>
           </ul>
@@ -176,7 +169,7 @@ export function ColophonSection() {
         className="mt-24 pt-8 border-t border-border/20 flex flex-col md:flex-row md:items-center md:justify-between gap-4"
       >
         <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest">
-          agent-loadout / by conorluddy
+          agent-loadout / sunzhk
         </p>
         <p className="font-mono text-[10px] text-muted-foreground">One command. 64 tools. Your agent is ready.</p>
       </div>

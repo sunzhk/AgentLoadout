@@ -1,4 +1,4 @@
-import { execa } from "execa";
+import { execa, execaSync } from "execa";
 import chalk from "chalk";
 import type { Tool } from "./catalog.js";
 import type { Platform } from "./platform.js";
@@ -12,18 +12,30 @@ export type VerifyResult = {
 };
 
 function getExtraPaths(platform: Platform): string {
+  const parts: string[] = [];
+
   if (platform === "darwin") {
-    return "/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin";
+    parts.push("/opt/homebrew/bin", "/opt/homebrew/sbin", "/usr/local/bin");
   }
   if (platform === "linux") {
     const home = process.env.HOME ?? "";
-    return `${home}/.local/bin:${home}/.cargo/bin`;
+    parts.push(`${home}/.local/bin`, `${home}/.cargo/bin`);
   }
   if (platform === "win32") {
     const userProfile = process.env.USERPROFILE ?? "";
-    return `${userProfile}\\scoop\\shims:${userProfile}\\.cargo\\bin`;
+    parts.push(`${userProfile}\\scoop\\shims`, `${userProfile}\\.cargo\\bin`);
   }
-  return "";
+
+  // Add npm global bin (handles nvm, fnm, volta, etc.)
+  try {
+    const prefix = execaSync("npm", ["prefix", "-g"]).stdout.trim();
+    const sep = platform === "win32" ? "\\" : "/";
+    parts.push(`${prefix}${sep}bin`);
+  } catch {
+    // npm not available
+  }
+
+  return parts.join(platform === "win32" ? ";" : ":");
 }
 
 async function checkTool(tool: Tool, platform: Platform): Promise<VerifyResult> {

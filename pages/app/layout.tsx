@@ -16,7 +16,7 @@ const ibmPlexMono = IBM_Plex_Mono({
 })
 const bebasNeue = Bebas_Neue({ weight: "400", subsets: ["latin"], variable: "--font-bebas" })
 
-const siteUrl = "https://conorluddy.github.io/AgentLoadout"
+const siteUrl = "https://sunzhk.github.io/AgentLoadout"
 
 export const metadata: Metadata = {
   title: "Agent Loadout — One Command to Arm Your Terminal",
